@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Lookup</title>
+    <style>
+        * {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #result {
+            position: absolute;
+            top: 11vw;
+            left: 20px;
+            margin-top: 20px;
+            z-index: 1;
+        }
+
+        #definitions {
+            margin-top: 10px;
+        }
+
+        #suggestions {
+            position: absolute;
+            top: 12vw;
+            left: 20px;
+            height: 20vw;
+            width: 25vw;
+            background-color: aliceblue;
+            border: solid skyblue 2px;
+            border-radius: 10px;
+            z-index: 9999;
+            overflow-y: auto;
+            /* padding: 10px; */
+        }
+
+        .suggestion {
+            cursor: pointer;
+            margin: 0;
+            padding: 5px 10px 5px 10px;
+        }
+
+        .suggestion:hover {
+            background-color: slategrey;
+            color: white;
+        }
+
+        #wordInput {
+            position: absolute;
+            top: 10vw;
+        }
+
+        button {
+            position: absolute;
+            top: 10vw;
+            left: 15.25vw;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Dictionary Lookup</h1>
+    <p>Enter a word below to look it up:</p>
+
+    <input type="text" id="wordInput" placeholder="Enter word" />
+    <button title="Search" onclick="lookupWord()">Look Up</button>
+
+    <div id="result"></div>
+
+    <script>
+
+        // getting the word/query from search url
+        function getWord(name) {
+            const params = new URLSearchParams(window.location.search)
+            return params.get(name)
+        }
+
+
+        // function for searching word
+        function lookupWord() {
+            let query = document.getElementById("wordInput").value.trim()
+
+            if (query) {
+                window.location.href = `search.html?query=${query}`
+            }
+        }
+
+
+        // function when user input "Enter" key
+        document.getElementById("wordInput").addEventListener('keyup', function (e) {
+            if (e.key === "Enter") {
+                lookupWord()
+            }
+        })
+
+
+        // Suggestions
+        const input = document.getElementById('wordInput')
+
+        input.addEventListener('input', function () {
+
+            const word = input.value.trim()
+
+            const apiKey = 'b01bb3e1-64fa-47bc-a5f7-d2ff4799a618'; // Your API key
+            const url = `https://www.dictionaryapi.com/api/v3/references/learners/json/${word}?key=${apiKey}`;
+
+
+            fetch(url).then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                return response.json();
+            }).then(data => {
+
+                const existingSuggestions = document.getElementById('suggestions');
+                if (existingSuggestions) {
+                    existingSuggestions.remove(); // Remove the previous suggestions container
+                }
+
+
+
+                if (typeof data[0] === 'string') {
+
+                    // suggestions.style.display = 'none';
+                    const suggestions = document.createElement('div')
+                    suggestions.id = 'suggestions'
+                    document.body.appendChild(suggestions)
+                    let i = 0
+
+                    data.forEach(s => {
+
+                        let suggestion = document.createElement('p')
+                        suggestion.classList.add('suggestion')
+
+                        suggestion.textContent = s
+
+
+                        suggestions.appendChild(suggestion)
+
+
+                        // clicking on suggestions
+                        suggestion.addEventListener('click', function () {
+                            input.value = s
+                            lookupWord()
+                            suggestions.remove()
+                        })
+
+                        i++
+                    })
+
+                }
+
+                // Remove suggestions
+                document.addEventListener('click', function () {
+                    if (!suggestions.contains(event.target) && event.target !== input) {
+                        suggestions.remove()
+                    }
+                })
+
+                console.log(data)
+            })
+        })
+
+
+
+        // Function to look up the word when the button is clicked  
+        function fetchData() {
+            // const word = document.getElementById('wordInput').value.trim();
+            const word = getWord("query")
+
+            document.getElementById("wordInput").value = word ? word : ""
+
+            if (!word) {
+                alert('Please enter a word.');
+                return;
+            }
+
+
+            const apiKey = 'b01bb3e1-64fa-47bc-a5f7-d2ff4799a618'; // Your API key
+            const url = `https://www.dictionaryapi.com/api/v3/references/learners/json/${word}?key=${apiKey}`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.innerHTML = '';  // Clear previous results
+
+                    console.log(data)
+
+                    if (data.length === 0) {
+                        resultDiv.innerHTML = `<p>No definitions found for the word: <strong>${word}</strong></p>`;
+                    } else {
+                        const wordData = data[0]; // Use the first result (if multiple)
+                        const definitions = wordData.shortdef;
+
+                        resultDiv.innerHTML = `<h2>Definitions for <strong>${word}</strong>:</h2>`;
+                        const definitionsDiv = document.createElement('div');
+                        definitions.forEach((def, index) => {
+                            const defElement = document.createElement('p');
+                            defElement.textContent = `${index + 1}. ${def}`;
+                            definitionsDiv.appendChild(defElement);
+                        });
+
+                        resultDiv.appendChild(definitionsDiv);
+                    }
+                })
+                .catch(error => {
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.innerHTML = `<p style="color: red;">There was an error with the API request: ${error}</p>`;
+                });
+        }
+
+        fetchData()
+    </script>
+
+</body>
+
+</html>

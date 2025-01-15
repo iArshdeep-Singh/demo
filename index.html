@@ -1,9 +1,11 @@
 <style>
-
     * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
         font-family: Verdana, Geneva, Tahoma, sans-serif;
-        color: red;
     }
+
 
     #input {
         height: 2.5vw;
@@ -108,7 +110,7 @@
             if (typeof data[0] === 'string') {
 
                 // suggestions.style.display = 'none';
-                const suggestions = document.createElement('div')
+                const suggestions = document.createElement('div');
                 suggestions.id = 'suggestions'
                 document.body.appendChild(suggestions)
                 let i = 0
